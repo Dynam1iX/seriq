@@ -36,9 +36,11 @@ class RomThreshold(BaseEstimator, ClassifierMixin):
     """Baseline: complete, если амплитуда ROM больше порога. Порог подбирается на train-фолде."""
     def fit(self, X, y):
         rom = X[:, FEATURES.index("rom")]
-        cands = np.unique(rom)
-        scores = [balanced_accuracy_score(y, (rom > c).astype(int)) for c in cands]
-        self.threshold_ = float(cands[int(np.argmax(scores))])
+        u = np.unique(rom)
+        cands = (u[:-1] + u[1:]) / 2 if len(u) > 1 else u      # пороги — середины между соседними значениями
+        scores = np.array([balanced_accuracy_score(y, (rom > c).astype(int)) for c in cands])
+        best = np.flatnonzero(scores == scores.max())
+        self.threshold_ = float(np.median(cands[best]))            # из равных по качеству — середина «зазора»
         self.classes_ = np.array([0, 1])
         return self
 
@@ -207,6 +209,24 @@ def main():
         f"### Матрица ошибок — baseline, test (08)",
         cm_md(b.test_cm), "",
         "![](ml/out/cm_test_baseline.png)", "",
+        "## Почему метрики почти 100% — и где это может сломаться",
+        "Амплитуда движения (ROM) по классам, градусы:",
+        "",
+        "| Выборка | Класс | min | медиана | max |",
+        "|---|---|---|---|---|",
+    ] + [
+        f"| {sp} | {'complete' if lb else 'incomplete'} | {g.rom.min():.0f} | {g.rom.median():.0f} | {g.rom.max():.0f} |"
+        for (sp, lb), g in df.groupby(["split", "label"])
+    ] + [
+        "",
+        f"Между классами зазор: неполные движения не больше {df[df.label == 0].rom.max():.0f}°, полные — не меньше {df[df.label == 1].rom.min():.0f}°. "
+        "Поэтому на этом датасете задача почти линейно разделима, и даже простой порог работает. "
+        "Наша модель добавляет оценку уверенности и учитывает скорость, удержание и плавность — это важно для живой камеры, "
+        "где ракурс, свет и выделение циклов хуже, чем в аккуратно снятых роликах.",
+        "",
+        "Где может сломаться: другой ракурс камеры (сверху, а не сбоку), люди с компенсаторными движениями, "
+        "очень медленные или дрожащие движения, неточное выделение циклов в непрерывном видео.",
+        "",
         "## Уверенность",
         f"p(complete) ≥ {P_DONE} → «Выполнено». Иначе → «Проверьте инструкцию»; при {P_UNSURE} < p < {P_DONE} или плохой видимости руки — дополнительно «результат неточный, повторите».",
         f"На LOSO в «неуверенную» зону попало {unsure:.0%} циклов.",

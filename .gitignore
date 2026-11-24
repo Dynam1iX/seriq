@@ -1,0 +1,17 @@
+# Python
+ml/.venv/
+__pycache__/
+*.pyc
+# модели MediaPipe для Python (большие, скачиваются командой из ml/README.md)
+ml/*.task
+# датасет и видео в репозиторий не кладём (1,2 ГБ, ссылка в README)
+seriq-dataset/
+*.mp4
+*.zip
+# Node / Next.js
+node_modules/
+web/.next/
+web/out/
+.env*
+.vercel
+.DS_Store

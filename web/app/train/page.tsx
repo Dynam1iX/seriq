@@ -176,7 +176,8 @@ export default function TrainPage() {
   };
 
   return (
-    <main className="mx-auto max-w-3xl p-4 text-slate-900">
+    <main className="min-h-screen bg-white">
+      <div className="mx-auto max-w-3xl p-4 text-slate-900">
       <h1 className="mb-2 text-3xl font-bold">Разгибание локтя</h1>
       <p className="mb-4 text-lg text-slate-600">{status}</p>
 
@@ -238,6 +239,7 @@ export default function TrainPage() {
           ))}
         </ul>
       </section>
+      </div>
     </main>
   );
 }

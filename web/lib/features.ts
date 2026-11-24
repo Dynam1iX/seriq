@@ -7,6 +7,20 @@ export type Features = Record<string, number>;
 
 const VIS_OK = 0.5;
 const OUTLIER_DEG = 30;
+const RESAMPLE_HZ = 15; // ряд всегда приводим к 15 точкам в секунду — как в ml/features.py
+
+/** Линейная интерполяция как numpy.interp (xs возрастают). */
+function interp(x: number, xs: number[], ys: number[]): number {
+  if (x <= xs[0]) return ys[0];
+  if (x >= xs[xs.length - 1]) return ys[ys.length - 1];
+  let lo = 0, hi = xs.length - 1;
+  while (hi - lo > 1) {
+    const mid = (lo + hi) >> 1;
+    if (xs[mid] <= x) lo = mid; else hi = mid;
+  }
+  const k = (x - xs[lo]) / (xs[hi] - xs[lo]);
+  return ys[lo] + (ys[hi] - ys[lo]) * k;
+}
 
 function median(a: number[]): number {
   const s = [...a].sort((x, y) => x - y);
@@ -46,10 +60,15 @@ export function cycleFeatures(samples: Sample[]): { f: Features; ext: number[]; 
   ok = ok.filter((_, i) => Math.abs(raw[i] - med9[i]) <= OUTLIER_DEG);
   if (ok.length < 5) return null;
 
-  const t = ok.map((s) => s.t);
-  const vis = ok.map((s) => s.vis);
-  // 2) сглаживание
-  const inc = medianFilter(ok.map((s) => s.incl as number), 5);
+  // 2) равномерная сетка 15 Гц + сглаживание
+  const t0 = ok.map((s) => s.t);
+  const n = Math.floor((t0[t0.length - 1] - t0[0]) * RESAMPLE_HZ) + 1;
+  if (n < 5) return null;
+  const t = Array.from({ length: n }, (_, i) => t0[0] + i / RESAMPLE_HZ);
+  const incRaw = ok.map((s) => s.incl as number);
+  const visRaw = ok.map((s) => s.vis);
+  const vis = t.map((x) => interp(x, t0, visRaw));
+  const inc = medianFilter(t.map((x) => interp(x, t0, incRaw)), 5);
 
   // 3) устойчивые верх и низ движения
   const top = percentile(inc, 95);

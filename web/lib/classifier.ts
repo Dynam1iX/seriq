@@ -34,7 +34,8 @@ export function predict(model: Model, f: Features): Verdict {
   let p: number;
   if (model.kind === "logreg") {
     let z = model.intercept!;
-    x.forEach((v, i) => (z += model.coef![i] * ((v - model.mean![i]) / model.scale![i])));
+    // ограничиваем стандартизованные значения ±3: одна странная величина с камеры не должна «обнулять» ответ
+    x.forEach((v, i) => (z += model.coef![i] * Math.max(-3, Math.min(3, (v - model.mean![i]) / model.scale![i]))));
     p = 1 / (1 + Math.exp(-z));
   } else {
     throw new Error("Для леса подключи lib/forest.js (m2cgen) или выбери логрегрессию");

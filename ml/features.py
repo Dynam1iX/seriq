@@ -15,8 +15,11 @@ VIS_OK = 0.5
 ARMS = {"l": ("l_elbow", "l_wrist"), "r": ("r_elbow", "r_wrist")}
 # Признаки модели — только про движение. duration / vis_mean / valid_frac зависят от камеры и длины ролика
 # (а камеры в train и test разные), поэтому они пишутся в CSV, но в модель НЕ идут — только для «уверенности».
-FEATURES = ["rom", "low", "t_peak", "v_peak", "v_mean", "hold", "frac45", "reversals"]
-QUALITY = ["duration", "vis_mean", "valid_frac"]
+# "low" (абсолютная нижняя точка) НЕ берём: зависит от ракурса камеры (проверено вживую: плоская рука = 18°, а не 0°).
+# "reversals" и "v_peak" тоже НЕ берём: зависят от частоты кадров и дрожания (браузер 30 к/с vs обучение 15 к/с).
+FEATURES = ["rom", "t_peak", "v_mean", "hold", "frac45"]
+QUALITY = ["low", "v_peak", "reversals", "duration", "vis_mean", "valid_frac"]
+RESAMPLE_HZ = 15  # ряд всегда приводим к 15 точкам в секунду — так признаки не зависят от камеры и браузера
 CURVE_POINTS = 64
 
 
@@ -75,7 +78,13 @@ def cycle_features(t, inc, vis, ok):
     if keep.sum() < 5:
         return None, None
     t, inc, vis = t[keep], inc[keep], vis[keep]
-    # 2) сглаживание
+    # 2) равномерная сетка 15 Гц (линейная интерполяция) + сглаживание
+    tg = t[0] + np.arange(int(np.floor((t[-1] - t[0]) * RESAMPLE_HZ)) + 1) / RESAMPLE_HZ
+    if len(tg) < 5:
+        return None, None
+    inc = np.interp(tg, t, inc)
+    vis = np.interp(tg, t, vis)
+    t = tg
     inc = _median_nearest(inc, 5)
     # 3) устойчивые верх и низ движения (люди иногда сначала поднимают руку, потом опускают)
     top = float(np.percentile(inc, 95))

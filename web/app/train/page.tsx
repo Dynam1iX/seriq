@@ -233,7 +233,8 @@ export default function TrainPage() {
                 <span className="block text-base text-slate-500">Результат неточный — посмотрите инструкцию и повторите.</span>
               )}
               <span className="block text-sm text-slate-400">
-                уверенность {Math.round(c.p * 100)}% · амплитуда {Math.round(c.rom)}°
+                уверенность модели в ответе {Math.round((c.result === "done" ? c.p : 1 - c.p) * 100)}% · амплитуда{" "}
+                {Math.round(c.rom)}°
               </span>
             </li>
           ))}

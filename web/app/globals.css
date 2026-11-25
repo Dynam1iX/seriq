@@ -1,8 +1,22 @@
 @import "tailwindcss";
 
+/* Палитра SerIQ: тёплая и спокойная, без «ИИ-синего». Цвета доступны как классы Tailwind: bg-clay-600, text-sage-900 и т. д. */
+@theme {
+  --color-clay-50: #fbefe8;
+  --color-clay-600: #b4532a;
+  --color-clay-700: #8f3f1f;
+  --color-sage-50: #eef3ea;
+  --color-sage-200: #d7e5cf;
+  --color-sage-700: #3f6b46;
+  --color-sage-900: #2b4a31;
+  --color-sand-100: #f6ebdd;
+  --color-sand-200: #eadbcb;
+  --color-ink: #2a211c;
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #fff8f1;
+  --foreground: #2a211c;
 }
 
 @theme inline {
@@ -12,10 +26,16 @@
   --font-mono: var(--font-geist-mono);
 }
 
-/* Тёмную тему отключили: интерфейс для пожилых — всегда светлый и контрастный */
+/* Тёмную тему не используем: интерфейс для пожилых — светлый и контрастный */
+
+html {
+  background: #fff8f1;
+}
 
 body {
-  background: var(--background);
+  /* мягкий градиент: крем -> персик -> светлая олива */
+  background: linear-gradient(160deg, #fff8f1 0%, #fbe9da 45%, #eef2e6 100%);
+  min-height: 100vh;
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }

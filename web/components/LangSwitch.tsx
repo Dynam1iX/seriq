@@ -8,7 +8,7 @@ export function LangSwitch({ lang, setLang }: { lang: Lang; setLang: (l: Lang) =
       onClick={() => setLang(l)}
       aria-pressed={lang === l}
       className={`rounded-xl px-4 py-2 text-lg font-semibold ${
-        lang === l ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-700"
+        lang === l ? "bg-clay-600 text-white" : "bg-white/70 text-stone-700"
       }`}
     >
       {label}

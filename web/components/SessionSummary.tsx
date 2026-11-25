@@ -55,19 +55,19 @@ export function SessionSummary({
   const line = (pts: number[]) => pts.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
 
   return (
-    <section className="mt-6 rounded-2xl border-2 border-slate-200 p-4">
+    <section className="mt-6 rounded-2xl border-2 border-sand-200 p-4">
       <h2 className="mb-3 text-2xl font-bold">{t.summaryTitle}</h2>
 
       <div className="mb-4 grid grid-cols-3 gap-3 text-center">
-        <div className="rounded-2xl bg-slate-100 p-3">
-          <div className="text-sm text-slate-500">{t.total}</div>
+        <div className="rounded-2xl bg-white/70 p-3">
+          <div className="text-sm text-stone-500">{t.total}</div>
           <div className="text-4xl font-bold">{cycles.length}</div>
         </div>
-        <div className="rounded-2xl bg-emerald-50 p-3 text-emerald-900">
+        <div className="rounded-2xl bg-sage-50 p-3 text-sage-900">
           <div className="text-sm">{t.doneCount}</div>
           <div className="text-4xl font-bold">{done}</div>
         </div>
-        <div className="rounded-2xl bg-slate-100 p-3 text-slate-800">
+        <div className="rounded-2xl bg-white/70 p-3 text-stone-800">
           <div className="text-sm">{t.checkCount}</div>
           <div className="text-4xl font-bold">{cycles.length - done}</div>
         </div>
@@ -78,8 +78,8 @@ export function SessionSummary({
           <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label={t.corridorLegend}>
             {[0, 30, 60, 90].map((v) => (
               <g key={v}>
-                <line x1={PAD.l} x2={W - PAD.r} y1={y(v)} y2={y(v)} stroke="#e2e8f0" />
-                <text x={PAD.l - 6} y={y(v) + 4} textAnchor="end" fontSize="12" fill="#64748b">
+                <line x1={PAD.l} x2={W - PAD.r} y1={y(v)} y2={y(v)} stroke="#eadbcb" />
+                <text x={PAD.l - 6} y={y(v) + 4} textAnchor="end" fontSize="12" fill="#8a7a6b">
                   {v}°
                 </text>
               </g>
@@ -91,10 +91,10 @@ export function SessionSummary({
                     ...corridor.p90.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`),
                     ...corridor.p10.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).reverse(), // нижняя граница справа налево
                   ].join(" ")}
-                  fill="#bbf7d0"
+                  fill="#d7e5cf"
                   opacity="0.7"
                 />
-                <polyline points={line(corridor.p50)} fill="none" stroke="#16a34a" strokeDasharray="6 4" strokeWidth="2" />
+                <polyline points={line(corridor.p50)} fill="none" stroke="#5b8a5f" strokeDasharray="6 4" strokeWidth="2" />
               </>
             )}
             {curves.map((c) => (
@@ -102,26 +102,26 @@ export function SessionSummary({
                 key={c.n}
                 points={line(c.pts)}
                 fill="none"
-                stroke={c.result === "done" ? "#047857" : "#2563eb"}
+                stroke={c.result === "done" ? "#3f6b46" : "#b4532a"}
                 strokeWidth="3"
                 opacity="0.9"
               />
             ))}
-            <text x={W - PAD.r} y={H - 8} textAnchor="end" fontSize="12" fill="#64748b">
+            <text x={W - PAD.r} y={H - 8} textAnchor="end" fontSize="12" fill="#8a7a6b">
               {t.axisX} →
             </text>
-            <text x={PAD.l + 4} y={PAD.t + 12} fontSize="12" fill="#64748b">
+            <text x={PAD.l + 4} y={PAD.t + 12} fontSize="12" fill="#8a7a6b">
               ↑ {t.axisY}
             </text>
           </svg>
-          <p className="mt-2 text-sm text-slate-500">{t.corridorLegend}</p>
+          <p className="mt-2 text-sm text-stone-500">{t.corridorLegend}</p>
         </>
       )}
 
       {history.length > 0 && (
         <div className="mt-4">
           <h3 className="mb-2 text-lg font-semibold">{t.history}</h3>
-          <ul className="space-y-1 text-base text-slate-700">
+          <ul className="space-y-1 text-base text-stone-700">
             {history.map((h, i) => (
               <li key={i}>
                 {h.date}: {t.total.toLowerCase()} {h.total}, {t.doneCount.toLowerCase()} {h.done}, {t.checkCount.toLowerCase()}{" "}
@@ -131,13 +131,13 @@ export function SessionSummary({
           </ul>
         </div>
       )}
-      <p className="mt-3 text-sm text-slate-500">🔒 {t.storedLocally}</p>
+      <p className="mt-3 text-sm text-stone-500">🔒 {t.storedLocally}</p>
       <button
         onClick={() => {
           clearHistory();
           setHistory([]);
         }}
-        className="mt-2 text-base text-slate-500 underline"
+        className="mt-2 text-base text-stone-500 underline"
       >
         {t.deleteData}
       </button>

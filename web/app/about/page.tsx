@@ -9,10 +9,10 @@ export default function About() {
   const [lang, setLang, t] = useLang();
   const ru = lang === "ru";
   return (
-    <main className="min-h-screen bg-white">
-      <div className="mx-auto flex max-w-2xl flex-col gap-5 p-6 text-slate-900">
+    <main className="min-h-screen">
+      <div className="mx-auto flex max-w-2xl flex-col gap-5 p-6 text-ink">
         <div className="flex items-center justify-between">
-          <Link href="/" className="text-lg text-slate-500 underline">
+          <Link href="/" className="text-lg text-stone-500 underline">
             ← {t.back}
           </Link>
           <LangSwitch lang={lang} setLang={setLang} />
@@ -65,7 +65,7 @@ export default function About() {
               </tr>
             </tbody>
           </table>
-          <p className="mt-2 text-base text-slate-600">
+          <p className="mt-2 text-base text-stone-600">
             {ru
               ? "Стресс-тест (24/30/60 кадров/с, дрожание 1,5–3°): 0 ошибок из 508. Подробно — REPORT.md в репозитории."
               : "Стресс-тест (секундына 24/30/60 кадр, 1,5–3° діріл): 508-ден 0 қате. Толығырақ — репозиторийдегі REPORT.md."}
@@ -74,7 +74,7 @@ export default function About() {
 
         <div>
           <h2 className="mb-2 text-xl font-bold">{ru ? "Ограничения" : "Шектеулер"}</h2>
-          <ul className="list-disc space-y-1 pl-6 text-base text-slate-700">
+          <ul className="list-disc space-y-1 pl-6 text-base text-stone-700">
             {(ru
               ? [
                   "В test один человек (20 видео) — нужен пилот с пациентами.",
@@ -94,7 +94,7 @@ export default function About() {
           </ul>
         </div>
 
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-stone-500">
           {ru ? "Данные" : "Деректер"}:{" "}
           <a className="underline" href="https://data.mendeley.com/datasets/49h9dcwx5v/1" target="_blank" rel="noreferrer">
             An upper limb stroke rehabilitation exercise video (Mendeley Data)

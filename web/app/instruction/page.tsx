@@ -11,13 +11,13 @@ export default function Instruction() {
     <main className="min-h-screen">
       <div className="mx-auto flex max-w-xl flex-col gap-5 p-6 text-ink">
         <div className="flex items-center justify-between">
-          <Link href="/" className="text-lg text-stone-500 underline">
+          <Link href="/" className="text-lg text-zinc-500 underline">
             ← {t.back}
           </Link>
           <LangSwitch lang={lang} setLang={setLang} />
         </div>
 
-        <h1 className="text-3xl font-bold">{t.instrTitle}</h1>
+        <h1 className="text-3xl font-extrabold tracking-tight">{t.instrTitle}</h1>
 
         <video
           src="/demo/complete_test_08.mp4"
@@ -26,14 +26,14 @@ export default function Instruction() {
           muted
           loop
           playsInline
-          className="w-full rounded-2xl bg-black"
+          className="w-full rounded-3xl bg-black"
         />
-        <p className="text-sm text-stone-400">{t.videoSource}</p>
+        <p className="text-sm text-zinc-400">{t.videoSource}</p>
 
         <ol className="flex flex-col gap-3">
           {steps.map((s, i) => (
-            <li key={i} className="flex gap-4 rounded-2xl bg-white/70 p-4 text-xl">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-clay-600 text-xl font-bold text-white">
+            <li key={i} className="flex gap-4 rounded-3xl bg-white shadow-card p-4 text-xl">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-600 text-xl font-bold text-white">
                 {i + 1}
               </span>
               <span>{s}</span>
@@ -41,9 +41,9 @@ export default function Instruction() {
           ))}
         </ol>
 
-        <p className="rounded-2xl bg-amber-50 p-4 text-xl font-semibold text-amber-900">⚠ {t.stopIfPain}</p>
+        <p className="rounded-3xl bg-amber-50 p-4 text-xl font-semibold text-amber-900">⚠ {t.stopIfPain}</p>
 
-        <Link href="/train" className="rounded-2xl bg-clay-600 px-6 py-5 text-center text-2xl font-semibold text-white">
+        <Link href="/train" className="rounded-full bg-violet-600 shadow-button hover:bg-violet-700 px-6 py-5 text-center text-2xl font-semibold text-white">
           {t.ready}
         </Link>
       </div>

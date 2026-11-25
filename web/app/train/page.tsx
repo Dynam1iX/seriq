@@ -245,19 +245,19 @@ export default function TrainPage() {
     <main className="min-h-screen">
       <div className="mx-auto max-w-3xl p-4 text-ink">
         <div className="mb-2 flex items-center justify-between">
-          <Link href="/" className="text-lg text-stone-500 underline">
+          <Link href="/" className="text-lg text-zinc-500 underline">
             ← {t.home}
           </Link>
           <LangSwitch lang={lang} setLang={setLang} />
         </div>
-        <h1 className="mb-1 text-3xl font-bold">{t.exercise}</h1>
-        <p className="mb-4 text-lg text-stone-600">{statusText[status]}</p>
+        <h1 className="mb-1 text-3xl font-extrabold tracking-tight">{t.exercise}</h1>
+        <p className="mb-4 text-lg text-zinc-600">{statusText[status]}</p>
 
         <div className="mb-3 flex flex-wrap gap-3">
-          <button onClick={startCamera} className="rounded-2xl bg-clay-600 px-6 py-4 text-xl font-semibold text-white">
+          <button onClick={startCamera} className="rounded-full bg-violet-600 shadow-button hover:bg-violet-700 px-6 py-4 text-xl font-semibold text-white">
             {t.camera}
           </button>
-          <label className="cursor-pointer rounded-2xl border-2 border-clay-600 px-6 py-4 text-xl font-semibold text-clay-700">
+          <label className="cursor-pointer rounded-full border-2 border-violet-600 bg-white px-6 py-4 text-xl font-semibold text-violet-700">
             {t.upload}
             <input
               type="file"
@@ -267,35 +267,35 @@ export default function TrainPage() {
             />
           </label>
           {(source !== "none" || cycles.length > 0) && (
-            <button onClick={finishSession} className="rounded-2xl bg-ink px-6 py-4 text-xl font-semibold text-white">
+            <button onClick={finishSession} className="rounded-full bg-ink px-6 py-4 text-xl font-semibold text-white">
               {t.finish}
             </button>
           )}
         </div>
 
         <div className="mb-4 flex flex-wrap gap-2 text-base">
-          <span className="self-center text-stone-500">{t.tryDemo}:</span>
-          <button onClick={() => playUrl("/demo/complete_test_08.mp4")} className="rounded-xl bg-white/70 px-3 py-2">
+          <span className="self-center text-zinc-500">{t.tryDemo}:</span>
+          <button onClick={() => playUrl("/demo/complete_test_08.mp4")} className="rounded-full bg-white shadow-card px-4 py-2">
             {t.demoFull}
           </button>
-          <button onClick={() => playUrl("/demo/incomplete_test_08.mp4")} className="rounded-xl bg-white/70 px-3 py-2">
+          <button onClick={() => playUrl("/demo/incomplete_test_08.mp4")} className="rounded-full bg-white shadow-card px-4 py-2">
             {t.demoPartial}
           </button>
         </div>
 
-        <div className={`relative overflow-hidden rounded-2xl bg-black ${source === "camera" ? "scale-x-[-1]" : ""}`}>
+        <div className={`relative overflow-hidden rounded-3xl bg-black ${source === "camera" ? "scale-x-[-1]" : ""}`}>
           <video ref={videoRef} playsInline muted className="block w-full" onEnded={onEnded} />
           <canvas ref={canvasRef} className="pointer-events-none absolute inset-0 h-full w-full" />
         </div>
 
         <div className="mt-4 grid grid-cols-2 gap-3 text-center">
-          <div className="rounded-2xl bg-white/70 p-3">
-            <div className="text-sm text-stone-500">{t.incl}</div>
-            <div className="text-3xl font-bold">{incl === null ? "—" : `${Math.round(incl)}°`}</div>
+          <div className="rounded-3xl bg-white shadow-card p-3">
+            <div className="text-sm text-zinc-500">{t.incl}</div>
+            <div className="text-3xl font-extrabold tracking-tight">{incl === null ? "—" : `${Math.round(incl)}°`}</div>
           </div>
-          <div className="rounded-2xl bg-white/70 p-3">
-            <div className="text-sm text-stone-500">{t.handVisible}</div>
-            <div className="text-3xl font-bold">{score >= SCORE_OK ? t.yes : t.no}</div>
+          <div className="rounded-3xl bg-white shadow-card p-3">
+            <div className="text-sm text-zinc-500">{t.handVisible}</div>
+            <div className="text-3xl font-extrabold tracking-tight">{score >= SCORE_OK ? t.yes : t.no}</div>
           </div>
         </div>
 
@@ -307,21 +307,21 @@ export default function TrainPage() {
             {cycles.map((c) => (
               <li
                 key={c.n}
-                className={`rounded-2xl p-4 text-xl ${c.result === "done" ? "bg-sage-50 text-sage-900" : "bg-white/70 text-stone-800"}`}
+                className={`rounded-3xl p-4 text-xl ${c.result === "done" ? "bg-mint-50 text-mint-900" : "bg-white shadow-card text-zinc-800"}`}
               >
                 <b>
                   {t.cycle} {c.n}:
                 </b>{" "}
                 {c.result === "done" ? t.done : t.check}
-                {c.reason === "fast" && <span className="block text-base text-stone-600">{t.reasonFast}</span>}
-                {c.reason === "tracking" && <span className="block text-base text-stone-600">{t.reasonTracking}</span>}
-                {c.unsure && <span className="block text-base text-stone-500">{t.unsure}</span>}
+                {c.reason === "fast" && <span className="block text-base text-zinc-600">{t.reasonFast}</span>}
+                {c.reason === "tracking" && <span className="block text-base text-zinc-600">{t.reasonTracking}</span>}
+                {c.unsure && <span className="block text-base text-zinc-500">{t.unsure}</span>}
                 {c.result === "check" && (
-                  <Link href="/instruction" className="mt-1 block text-base text-clay-700 underline">
+                  <Link href="/instruction" className="mt-1 block text-base text-violet-700 underline">
                     {t.watchInstr}
                   </Link>
                 )}
-                <span className="block text-sm text-stone-400">
+                <span className="block text-sm text-zinc-400">
                   {t.confidence} {Math.round((c.result === "done" ? c.p : 1 - c.p) * 100)}% · {t.amplitude}{" "}
                   {Math.round(c.rom)}°
                 </span>
@@ -329,7 +329,7 @@ export default function TrainPage() {
             ))}
           </ul>
           {cycles.length > 0 && (
-            <button onClick={reset} className="mt-3 text-lg text-stone-500 underline">
+            <button onClick={reset} className="mt-3 text-lg text-zinc-500 underline">
               {t.reset}
             </button>
           )}

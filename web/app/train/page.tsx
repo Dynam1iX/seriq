@@ -39,6 +39,7 @@ export default function TrainPage() {
   const sourceRef = useRef<Source>("none");
   const samplesRef = useRef<Sample[]>([]);
   const detectorRef = useRef(new CycleDetector());
+  const fileCyclesRef = useRef<Sample[][]>([]);
 
   const [status, setStatus] = useState<Status>("loading");
   const [source, setSource] = useState<Source>("none");
@@ -144,8 +145,12 @@ export default function TrainPage() {
         setScore(0);
       }
       samplesRef.current.push(sample);
-      // камера: циклы выделяет детектор; видеофайл: всё видео = один цикл (как в датасете)
+      // камера: циклы выделяет детектор сразу; видеофайл: копим циклы детектора и решаем в конце (onEnded)
       if (sourceRef.current === "camera") finishCycle(detectorRef.current.push(sample));
+      else if (sourceRef.current === "file") {
+        const c = detectorRef.current.push(sample);
+        if (c) fileCyclesRef.current.push(c);
+      }
     }
     rafRef.current = requestAnimationFrame(loop);
   }, [finishCycle]);
@@ -167,6 +172,7 @@ export default function TrainPage() {
     sourceRef.current = src;
     setSource(src);
     samplesRef.current = [];
+    fileCyclesRef.current = [];
     detectorRef.current.reset();
     lastVideoTimeRef.current = -1;
     cancelAnimationFrame(rafRef.current);
@@ -204,7 +210,16 @@ export default function TrainPage() {
   };
 
   const onEnded = () => {
-    if (sourceRef.current === "file") finishCycle(samplesRef.current);
+    if (sourceRef.current !== "file") return;
+    const last = detectorRef.current.flush();
+    if (last) fileCyclesRef.current.push(last);
+    const s = samplesRef.current;
+    const duration = s.length ? s[s.length - 1].t - s[0].t : 0;
+    // Короткое видео (как в датасете: 1 видео = 1 цикл) — оцениваем целиком.
+    // Длинная запись с несколькими повторами — каждый цикл отдельно.
+    if (duration > 20 && fileCyclesRef.current.length >= 2) fileCyclesRef.current.forEach((c) => finishCycle(c));
+    else finishCycle(s);
+    fileCyclesRef.current = [];
   };
 
   const finishSession = () => {

@@ -89,6 +89,10 @@ export function cycleFeatures(samples: Sample[]): { f: Features; ext: number[]; 
   let hold = 0;
   ext.forEach((x, i) => { if (x >= rom - 10) hold += segDt[i]; });
 
+  // время опускания: от ПОСЛЕДНЕГО момента «рука вверху» (<10% амплитуды) до первого «рука внизу» (>=90%)
+  const i90 = rom > 0 ? Math.max(0, ext.findIndex((x) => x >= 0.9 * rom)) : 0;
+  let i10 = 0;
+  for (let i = 0; i <= i90; i++) if (ext[i] < 0.1 * rom) i10 = i;
   const mean = (a: number[]) => (a.length ? a.reduce((p, c) => p + c, 0) / a.length : 0);
   const f: Features = {
     rom,
@@ -100,6 +104,7 @@ export function cycleFeatures(samples: Sample[]): { f: Features; ext: number[]; 
     hold,
     frac45: ext.filter((x) => x > 45).length / ext.length,
     reversals,
+    descent: t[i90] - t[i10], // время опускания руки (10% -> 90% амплитуды), с
     vis_mean: mean(vis),
     valid_frac: validFrac,
   };

@@ -298,6 +298,8 @@ export default function TrainPage() {
                   {t.cycle} {c.n}:
                 </b>{" "}
                 {c.result === "done" ? t.done : t.check}
+                {c.reason === "fast" && <span className="block text-base text-slate-600">{t.reasonFast}</span>}
+                {c.reason === "tracking" && <span className="block text-base text-slate-600">{t.reasonTracking}</span>}
                 {c.unsure && <span className="block text-base text-slate-500">{t.unsure}</span>}
                 {c.result === "check" && (
                   <Link href="/instruction" className="mt-1 block text-base text-blue-700 underline">

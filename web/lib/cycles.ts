@@ -1,98 +1,88 @@
 /**
- * Выделение циклов из непрерывного видео (камера или длинный ролик).
- * ПОКОЙ -> (предплечье опустилось > 10° от исходного) -> ДВИЖЕНИЕ
- * ДВИЖЕНИЕ -> конец цикла, если: рука вернулась (< 5°) ИЛИ стоит неподвижно 3 c ИЛИ прошло 20 c.
- * После конца ждём возврата руки вверх, чтобы обратный ход не посчитался новым циклом.
+ * Выделение циклов из непрерывного видео камеры (гистерезис по «верху» и «низу» движения).
+ *
+ *  ПОКОЙ:    помним «верх» — самое высокое положение руки с конца прошлого цикла.
+ *            Рука опустилась ниже «верха» больше чем на START_DEG -> ДВИЖЕНИЕ.
+ *  ДВИЖЕНИЕ: помним «низ». Цикл закончен, если:
+ *            рука поднялась от «низа» на половину глубины (но не меньше RETURN_MIN_DEG)
+ *            ИЛИ рука стоит неподвижно STILL_SEC ИЛИ прошло MAX_SEC.
+ *  После цикла «верх» = текущее положение, и всё повторяется.
+ * Сигнал предварительно сглаживается медианой 5 последних кадров, сбои детектора (скачок > 30°) пропускаются.
  */
 import type { Sample } from "./features";
 
-const START_DEG = 10;   // неполные движения в датасете бывают всего ~18-25°
-const END_DEG = 5;
-const GLITCH_DEG = 30;  // кадр, отличающийся от медианы 5 последних больше чем на 30°, — сбой детектора, пропускаем
+const START_DEG = 12;       // неполные движения в датасете ~15-30°, дрожание кисти с камеры ±3-5°
+const RETURN_MIN_DEG = 8;
 const STILL_SEC = 3;
-const STILL_DEG = 3;
-const MAX_SEC = 20;
-const PRE_SEC = 1.5; // в цикл включаем 1.5 c покоя до движения — как в видео датасета (иначе «верх» занижается)
+const STILL_DEG = 4;
+const MAX_SEC = 25;
+const PRE_SEC = 1.5;        // в цикл включаем 1.5 c до начала движения — как в видео датасета
+const GLITCH_DEG = 30;
 
-type State = "idle" | "moving" | "cooldown";
+type State = "idle" | "moving";
 
 export class CycleDetector {
   private buf: Sample[] = [];
+  private raw: number[] = [];      // последние 5 значений угла для медианы
   private state: State = "idle";
-  private baseline: number | null = null;
+  private top: number | null = null;
+  private topT = 0;
+  private bottom = 0;
   private cycleStartT = 0;
-  private stillSinceT = 0;
   private stillRef = 0;
-  private recent: number[] = [];
-  private lowSinceT: number | null = null;
+  private stillSinceT = 0;
 
   /** Добавить кадр. Возвращает кадры законченного цикла или null. */
   push(s: Sample): Sample[] | null {
     this.buf.push(s);
-    // держим в памяти только последние 30 c
-    const cutoff = s.t - 30;
-    while (this.buf.length && this.buf[0].t < cutoff) this.buf.shift();
+    while (this.buf.length && this.buf[0].t < s.t - 40) this.buf.shift();
     if (s.incl === null || s.vis < 0.5) return null;
-    // защита от сбоев детектора кисти (запястье и костяшки на 1-3 кадра меняются местами)
-    if (this.recent.length >= 3) {
-      const m = [...this.recent].sort((a, b) => a - b)[this.recent.length >> 1];
+
+    // сбой детектора кисти (запястье и костяшки поменялись местами на 1-3 кадра)
+    if (this.raw.length >= 3) {
+      const m = [...this.raw].sort((a, b) => a - b)[this.raw.length >> 1];
       if (Math.abs(s.incl - m) > GLITCH_DEG) return null;
     }
-    this.recent.push(s.incl);
-    if (this.recent.length > 5) this.recent.shift();
+    this.raw.push(s.incl);
+    if (this.raw.length > 5) this.raw.shift();
+    const v = [...this.raw].sort((a, b) => a - b)[this.raw.length >> 1]; // сглаженный угол
 
     if (this.state === "idle") {
-      // Исходное положение обновляем только когда рука СТОИТ (разброс за 1 c < 5°).
-      // Иначе при медленном движении «исходное» ползло бы за рукой и цикл не начался бы никогда.
-      const recent = this.buf
-        .filter((x) => x.t >= s.t - 1 && x.incl !== null && x.vis >= 0.5)
-        .map((x) => x.incl as number)
-        .sort((a, b) => a - b);
-      const steady = recent.length >= 5 && recent[recent.length - 1] - recent[0] < 5;
-      if (steady) {
-        const m = recent[recent.length >> 1];
-        // «верх» поднимаем сразу (люди часто сначала поднимают руку выше), опускаем — только если рука стоит ниже 3 c
-        if (this.baseline === null || m > this.baseline) {
-          this.baseline = m;
-          this.lowSinceT = null;
-        } else if (this.baseline - m > START_DEG / 2) {
-          if (this.lowSinceT === null) this.lowSinceT = s.t;
-          else if (s.t - this.lowSinceT >= 3) { this.baseline = m; this.lowSinceT = null; }
-        }
+      if (this.top === null || v >= this.top) {
+        this.top = v;
+        this.topT = s.t;
       }
-      if (this.baseline === null) return null;
-      if (this.baseline - s.incl > START_DEG) {
+      if (this.top - v > START_DEG) {
         this.state = "moving";
-        this.cycleStartT = s.t - PRE_SEC;
+        this.cycleStartT = Math.max(this.topT - PRE_SEC, this.buf[0].t);
+        this.bottom = v;
+        this.stillRef = v;
         this.stillSinceT = s.t;
-        this.stillRef = s.incl;
       }
       return null;
     }
 
-    if (this.state === "moving") {
-      const ext = this.baseline! - s.incl;
-      if (Math.abs(s.incl - this.stillRef) > STILL_DEG) {
-        this.stillRef = s.incl;
-        this.stillSinceT = s.t;
-      }
-      const returned = ext < END_DEG;
-      const still = s.t - this.stillSinceT >= STILL_SEC;
-      const tooLong = s.t - this.cycleStartT >= MAX_SEC;
-      if (returned || still || tooLong) {
-        const cycle = this.buf.filter((x) => x.t >= this.cycleStartT);
-        this.state = returned ? "idle" : "cooldown";
-        return cycle;
-      }
-      return null;
+    // moving
+    this.bottom = Math.min(this.bottom, v);
+    if (Math.abs(v - this.stillRef) > STILL_DEG) {
+      this.stillRef = v;
+      this.stillSinceT = s.t;
     }
-
-    // cooldown: ждём, пока рука вернётся к исходному положению
-    if (this.baseline! - s.incl < START_DEG) this.state = "idle";
+    const depth = this.top! - this.bottom;
+    const returned = v - this.bottom >= Math.max(RETURN_MIN_DEG, depth / 2);
+    const still = s.t - this.stillSinceT >= STILL_SEC && depth > START_DEG;
+    const tooLong = s.t - this.cycleStartT >= MAX_SEC;
+    if (returned || still || tooLong) {
+      const cycle = this.buf.filter((x) => x.t >= this.cycleStartT);
+      this.state = "idle";
+      this.top = v; // новый «верх» — откуда рука сейчас
+      this.topT = s.t;
+      return cycle;
+    }
     return null;
   }
 
-  /** Видео закончилось посреди движения — отдать то, что есть, как цикл. */
+  /** Занятие закончено посреди движения — отдать то, что есть, как цикл. */
   flush(): Sample[] | null {
     if (this.state !== "moving") return null;
     this.state = "idle";
@@ -101,9 +91,8 @@ export class CycleDetector {
 
   reset() {
     this.buf = [];
-    this.recent = [];
+    this.raw = [];
     this.state = "idle";
-    this.baseline = null;
-    this.lowSinceT = null;
+    this.top = null;
   }
 }

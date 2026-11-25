@@ -10,6 +10,7 @@ export type Model = {
   p_done: number;
   p_unsure: number;
   baseline_rom_threshold: number;
+  min_descent_s?: number;
   mean?: number[];
   scale?: number[];
   coef?: number[];
@@ -21,6 +22,7 @@ export type Verdict = {
   unsure: boolean;            // показать «результат неточный, повторите»
   p: number;                  // уверенность модели, что цикл complete
   baselineSaysDone: boolean;  // для экрана «О модели»
+  reason?: "fast" | "tracking"; // почему «Проверьте инструкцию», если причина не в амплитуде
 };
 
 export async function loadModel(): Promise<Model> {
@@ -41,10 +43,13 @@ export function predict(model: Model, f: Features): Verdict {
     throw new Error("Для леса подключи lib/forest.js (m2cgen) или выбери логрегрессию");
   }
   const poorTracking = (f.vis_mean ?? 1) < 0.6 || (f.valid_frac ?? 1) < 0.6;
+  // быстрее любого полного движения из датасета — модель такого не видела, не угадываем
+  const tooFast = model.min_descent_s !== undefined && f.rom > model.baseline_rom_threshold && f.descent < model.min_descent_s;
   return {
-    result: p >= model.p_done && !poorTracking ? "done" : "check",
+    result: p >= model.p_done && !poorTracking && !tooFast ? "done" : "check",
     unsure: poorTracking || (p > model.p_unsure && p < model.p_done),
     p,
     baselineSaysDone: f.rom > model.baseline_rom_threshold,
+    reason: tooFast ? "fast" : poorTracking ? "tracking" : undefined,
   };
 }

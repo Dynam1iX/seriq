@@ -18,7 +18,8 @@ ARMS = {"l": ("l_elbow", "l_wrist"), "r": ("r_elbow", "r_wrist")}
 # "low" (абсолютная нижняя точка) НЕ берём: зависит от ракурса камеры (проверено вживую: плоская рука = 18°, а не 0°).
 # "reversals" и "v_peak" тоже НЕ берём: зависят от частоты кадров и дрожания (браузер 30 к/с vs обучение 15 к/с).
 FEATURES = ["rom", "t_peak", "v_mean", "hold", "frac45"]
-QUALITY = ["low", "v_peak", "reversals", "duration", "vis_mean", "valid_frac"]
+QUALITY = ["low", "v_peak", "reversals", "descent", "duration", "vis_mean", "valid_frac"]
+# descent — время опускания руки (от 10% до 90% амплитуды), с. В модель не идёт: используется как проверка «слишком быстро».
 RESAMPLE_HZ = 15  # ряд всегда приводим к 15 точкам в секунду — так признаки не зависят от камеры и браузера
 CURVE_POINTS = 64
 
@@ -98,6 +99,10 @@ def cycle_features(t, inc, vis, ok):
     fast = v[np.abs(v) > 15]
     reversals = int(np.sum(np.diff(np.sign(fast)) != 0)) if len(fast) > 1 else 0
     seg_dt = np.append(dt, dt[-1] if len(dt) else 0)
+    # время опускания: от ПОСЛЕДНЕГО момента «рука вверху» (<10% амплитуды) до первого «рука внизу» (>=90%)
+    i90 = int(np.argmax(ext >= 0.9 * rom)) if rom > 0 else 0
+    up = np.flatnonzero(ext[: i90 + 1] < 0.1 * rom)
+    i10 = int(up[-1]) if len(up) else 0
     f = dict(
         rom=rom,
         low=low,
@@ -108,6 +113,7 @@ def cycle_features(t, inc, vis, ok):
         hold=float(seg_dt[ext >= rom - 10].sum()),
         frac45=float((ext > 45).mean()),
         reversals=reversals,
+        descent=float(t[i90] - t[i10]),
         vis_mean=float(vis.mean()),
         valid_frac=valid_frac,
     )

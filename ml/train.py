@@ -150,8 +150,13 @@ def main():
 
     # --- 3. Экспорт в JS ---
     best = fitted[best_name]
+    # Защита от «незнакомых» движений: быстрее самого быстрого полного движения в train модель не видела
+    # (2-й перцентиль, а не минимум: в одном видео сбой детектора даёт 0.07 c)
+    fast_ref = float(np.percentile(tr[tr.label == 1].descent, 2))
+    min_descent = float(np.floor(fast_ref * 0.8 * 10) / 10)
     model_json = dict(features=FEATURES, p_done=P_DONE, p_unsure=P_UNSURE,
-                      baseline_rom_threshold=fitted[base_name].threshold_, kind=None)
+                      baseline_rom_threshold=fitted[base_name].threshold_, kind=None,
+                      min_descent_s=min_descent)
     if best_name == "Логистическая регрессия":
         sc, lr = best.named_steps["standardscaler"], best.named_steps["logisticregression"]
         model_json.update(kind="logreg", mean=sc.mean_.tolist(), scale=sc.scale_.tolist(),
@@ -256,6 +261,12 @@ def main():
         f"(так ведёт себя браузерная камера). Ошибок: {stress_bad} из {stress_n}. "
         "Для этого ряд угла всегда приводится к 15 точкам в секунду, а признаки, зависящие от частоты кадров "
         "(число смен направления, пиковая скорость), в модель не входят — мы нашли эту проблему при живом тесте.",
+        "",
+        "## Защита от слишком быстрого движения",
+        f"В train почти все полные движения (98%) опускают руку не быстрее чем за {fast_ref:.1f} c "
+        f"(медиана {tr[tr.label == 1].descent.median():.1f} c). Быстрее модель движений не видела, поэтому, "
+        f"если рука опустилась быстрее {min_descent:.1f} c, приложение отвечает «Проверьте инструкцию» "
+        "(«движение быстрее, чем в инструкции»), а не угадывает. Это правило, а не часть модели; найдено при живом тесте.",
         "",
         "## Уверенность",
         f"p(complete) ≥ {P_DONE} → «Выполнено». Иначе → «Проверьте инструкцию»; при {P_UNSURE} < p < {P_DONE} или плохой видимости руки — дополнительно «результат неточный, повторите».",

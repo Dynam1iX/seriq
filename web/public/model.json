@@ -10,6 +10,7 @@
  "p_unsure": 0.3,
  "baseline_rom_threshold": 46.7028938117152,
  "kind": "logreg",
+ "min_descent_s": 1.9,
  "mean": [
   50.0701330648609,
   8.10404984423676,
